@@ -9,7 +9,7 @@
 if [ $ASR_OUT ]; then
   TEMP_LOCATION=$ASR_OUT
 else
-  TEMP_LOCATION=$(mktemp -p /tmp asr.XXXXXXXXXX)
+  TEMP_LOCATION="/tmp/asr.$RANDOM"
 fi
 
 RESULTS=$TEMP_LOCATION.json
