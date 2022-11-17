@@ -31,9 +31,6 @@ WHITE='\033[1;37m'
 
 if [ -r .config ]; then
   . .config
-else
-  echo -e "${RED}Can't read .config - exiting${NOCOLOR}"
-  exit 1
 fi
 
 if [ -z "$BASE_URL" ]; then
