@@ -45,6 +45,11 @@ if [ -z "$RECORD_FORMAT" ]; then
   RECORD_FORMAT="flac"
 fi
 
+if [ -z "$USER" -o -z "$PASS" ]; then
+  USER="none"
+  PASS="none"
+fi
+
 AUDIO="asr.$RECORD_FORMAT"
 
 check_path() {
