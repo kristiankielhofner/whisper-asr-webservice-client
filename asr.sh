@@ -52,7 +52,9 @@ else
 fi
 
 # Cleanup
-rm -rf "$AUDIO" "$RESULTS" "$TEXT" "$TRANSLATED_TEXT"
+do_clean() {
+  rm -rf "$AUDIO" "$RESULTS" "$TEXT" "$TRANSLATED_TEXT"
+}
 
 if [ "$2" ]; then
   SOURCE="$2"
@@ -89,6 +91,11 @@ check_path file
 
 case $1 in
 
+clean)
+  echo -e "${YELLOW}Cleaning old files${NOCOLOR}"
+  do_clean
+;;
+
 list)
   if [ "$ASR_PLATFORM" = linux ]; then
     pactl list short sources
@@ -100,6 +107,7 @@ list)
 asr)
   if [ ! -r "$SOURCE" ]; then
     check_path ffmpeg
+    do_clean
     echo -e "${YELLOW}Recording audio with ffmpeg - CTRL+C when you want to stop capturing and submit${NOCOLOR}"
     if [ "$ASR_PLATFORM" = "linux" ]; then
       ffmpeg -f pulse -i "$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
