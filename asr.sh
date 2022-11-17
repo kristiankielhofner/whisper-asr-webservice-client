@@ -110,9 +110,9 @@ asr)
     do_clean
     echo -e "${YELLOW}Recording audio with ffmpeg - CTRL+C when you want to stop capturing and submit${NOCOLOR}"
     if [ "$ASR_PLATFORM" = "linux" ]; then
-      ffmpeg -f pulse -i "$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
+      ffmpeg -hide_banner -f pulse -i "$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
     else
-      ffmpeg -f avfoundation -i "$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
+      ffmpeg -hide_banner -f avfoundation -i "$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
     fi
   else
     echo -e "${YELLOW}Using provided file $SOURCE as input${NOCOLOR}"
