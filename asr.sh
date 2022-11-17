@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Whisper ASR client
+# TODO: Investigate HTTP2 failures and stalls on mac
+# TODO: 
+
 # Define output files
 AUDIO="asr.flac"
 RESULTS="asr.json"
@@ -14,6 +18,9 @@ BASE_URL="***REMOVED***"
 # HTTP basic auth params
 USER="***REMOVED***"
 PASS="***REMOVED***"
+
+# FLAC compression level for live capture
+FLAC_COMPRESS="12"
 
 # Shell colors
 NOCOLOR='\033[0m'
@@ -33,18 +40,29 @@ LIGHTPURPLE='\033[1;35m'
 LIGHTCYAN='\033[1;36m'
 WHITE='\033[1;37m'
 
+check_path() {
+  [[ $(type -P "$1") ]] || { echo -e "${RED}Error - you need to install $1${NOCOLOR}" 1>&2; exit 1; }
+}
+
+if [ "$OSTYPE" = "linux-gnu" ]; then
+  ASR_PLATFORM="linux"
+else
+  ASR_PLATFORM="mac"
+#  AUDIO="asr.wav"
+fi
+
 # Cleanup
 rm -rf "$AUDIO" "$RESULTS" "$TEXT" "$TRANSLATED_TEXT"
 
 if [ "$2" ]; then
   SOURCE="$2"
 else
-  SOURCE="default"
+  if [ "$ASR_PLATFORM" = "linux" ]; then
+    SOURCE="default"
+  else
+    SOURCE=':1'
+  fi
 fi
-
-check_path() {
-  [[ $(type -P "$1") ]] || { echo -e "${RED}Error - you need to install $1${NOCOLOR}" 1>&2; exit 1; }
-}
 
 whisperTranslate() {
   if [ -z $3 ]; then
@@ -52,7 +70,7 @@ whisperTranslate() {
   else
     DEST_LANG="$3"
   fi
-  curl -X 'POST' \
+  curl --http1.1 -X 'POST' \
   "$BASE_URL/asr?task=translate&language=$DEST_LANG&output=json" \
   -u "$USER:$PASS" \
   -H 'accept: application/json' \
@@ -72,14 +90,22 @@ check_path file
 case $1 in
 
 list)
-  pactl list short sources
+  if [ "$ASR_PLATFORM" = linux ]; then
+    pactl list short sources
+  else
+    ffmpeg -f avfoundation -list_devices true -i ""
+  fi
 ;;
 
 asr)
   if [ ! -r "$SOURCE" ]; then
     check_path ffmpeg
     echo -e "${YELLOW}Recording audio with ffmpeg - CTRL+C when you want to stop capturing and submit${NOCOLOR}"
-    ffmpeg -f pulse -i "$SOURCE" -compression_level 12 -ar 16000 -ac 1 "$AUDIO"
+    if [ "$ASR_PLATFORM" = "linux" ]; then
+      ffmpeg -f pulse -i "$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
+    else
+      ffmpeg -f avfoundation -i "$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
+    fi
   else
     echo -e "${YELLOW}Using provided file $SOURCE as input${NOCOLOR}"
     export AUDIO="$SOURCE"
@@ -88,7 +114,7 @@ asr)
   if [ -f "$AUDIO" ]; then
     MIME=$(file --mime-type -b "$AUDIO")
     echo -e "${YELLOW}Submitting to $BASE_URL - please hold but ASR time is roughly 20x real-time${NOCOLOR}"
-    curl -X 'POST' \
+    curl --http1.1 -X 'POST' \
     "$BASE_URL/asr?task=transcribe&output=json" \
     -u "$USER:$PASS" \
     -H 'accept: application/json' \
