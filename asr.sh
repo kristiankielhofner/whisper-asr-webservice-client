@@ -82,7 +82,7 @@ do_asr() {
 
   if [ -f "$AUDIO" ]; then
     MIME=$(file --mime-type -b "$AUDIO")
-    echo -e "${YELLOW}Submitting to $BASE_URL - please hold: ASR time is usually 10-20x real-time${NOCOLOR}"
+    echo -e "${YELLOW}Submitting to $BASE_URL - please hold: ASR time is usually 10x faster than real-time${NOCOLOR}"
     curl --http1.1 -X 'POST' \
     "$BASE_URL/asr?task=transcribe&output=json" \
     -u "$USER:$PASS" \
@@ -91,7 +91,8 @@ do_asr() {
     -F "audio_file=@$AUDIO;type=$MIME" > "$RESULTS"
 
     LANG=$(cat "$RESULTS" | jq -r .language)
-    echo -e "\n${YELLOW}Here is your $LANG language text from Whisper ASR!"
+    HUMAN_LANG=$(cat langmap.json | jq -r --arg code "$LANG" '.[] | select(.code == $code) | {name} | .name')
+    echo -e "\n${YELLOW}Here is your $HUMAN_LANG language text from Whisper ASR!"
     echo -e "${GREEN}"
     # Unnecessary use of cat award
     cat "$RESULTS" | jq -r .text | tr . '\n' | sed 's/ //' | tee "$TEXT"
@@ -99,13 +100,13 @@ do_asr() {
     echo -e "\n${YELLOW}Your raw text output can be found in $TEXT"
 
     if [ "$LANG" != "en" ]; then
-      echo -e "\n${YELLOW}Detected non-English language $LANG - translating${NOCOLOR}"
+      echo -e "\n${YELLOW}Detected non-English language $HUMAN_LANG - translating${NOCOLOR}"
       echo
       whisperTranslate "$AUDIO" "$MIME" "en" | jq -r .text | tr . '\n' | sed 's/ //' > "$TRANSLATED_TEXT"
-      echo -e "\n${YELLOW}Here is your $LANG language text in English from Whisper ASR!"
+      echo -e "\n${YELLOW}Here is your $HUMAN_LANG language text translated to English from Whisper ASR!"
       echo -e "\n${GREEN}"
       cat "$TRANSLATED_TEXT"
-      echo -e "\n${YELLOW}Your $LANG-English translated raw text output can be found in $TRANSLATED_TEXT${NOCOLOR}"
+      echo -e "\n${YELLOW}Your $HUMAN_LANG to English translated raw text output can be found in $TRANSLATED_TEXT${NOCOLOR}"
     else
       #echo -e "\n${YELLOW}If you want me to translate please type the two letter language ISO code${NOCOLOR}"
       #read TLANG
