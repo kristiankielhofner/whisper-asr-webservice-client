@@ -155,7 +155,7 @@ asr)
 ;;
 
 *)
-  echo -e "${RED}Usage $0 list|asr [PulseAudio capture device or local file]${NOCOLOR}"
+  echo -e "${RED}Usage $0 asr|clean|list [PulseAudio capture device or local file]${NOCOLOR}"
   exit 1
 ;;
 
