@@ -1,6 +1,6 @@
 # whisper-asr-webservice-client
 
-Linux and Mac OS X client for https://github.com/ahmetoner/whisper-asr-webservice
+A hackly slapdash thrown together-late-at-night Linux and Mac OS X client for https://github.com/ahmetoner/whisper-asr-webservice
 
 ## Get Started & Configuration
 You will need to create a `.config` file in this directory with the following:
