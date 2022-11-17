@@ -56,50 +56,7 @@ do_clean() {
   rm -rf "$AUDIO" "$RESULTS" "$TEXT" "$TRANSLATED_TEXT"
 }
 
-if [ "$2" ]; then
-  SOURCE="$2"
-else
-  if [ "$ASR_PLATFORM" = "linux" ]; then
-    SOURCE="default"
-  else
-    SOURCE="1"
-  fi
-fi
-
-whisperTranslate() {
-  curl --http1.1 -X 'POST' \
-  "$BASE_URL/asr?task=translate&language=$3&output=json" \
-  -u "$USER:$PASS" \
-  -H 'accept: application/json' \
-  -H 'Content-Type: multipart/form-data' \
-  -F "audio_file=@$1;type=$2"
-}
-
-# We need JQ
-check_path jq
-
-# We need curl
-check_path curl
-
-# We need file
-check_path file
-
-case $1 in
-
-clean)
-  echo -e "${YELLOW}Cleaning old files${NOCOLOR}"
-  do_clean
-;;
-
-list)
-  if [ "$ASR_PLATFORM" = linux ]; then
-    pactl list short sources
-  else
-    ffmpeg -hide_banner -f avfoundation -list_devices true -i "" 2> >(grep -A 10 'audio') | grep -v 'error'
-  fi
-;;
-
-asr)
+do_asr() {
   if [ ! -r "$SOURCE" ]; then
     check_path ffmpeg
     do_clean
@@ -157,7 +114,58 @@ asr)
     echo -e "${RED}Error - could not read audio $AUDIO${NOCOLOR}"
     exit 1
   fi
+}
 
+if [ "$2" ]; then
+  SOURCE="$2"
+else
+  if [ "$ASR_PLATFORM" = "linux" ]; then
+    SOURCE="default"
+  else
+    SOURCE="1"
+  fi
+fi
+
+whisperTranslate() {
+  curl --http1.1 -X 'POST' \
+  "$BASE_URL/asr?task=translate&language=$3&output=json" \
+  -u "$USER:$PASS" \
+  -H 'accept: application/json' \
+  -H 'Content-Type: multipart/form-data' \
+  -F "audio_file=@$1;type=$2"
+}
+
+# We need JQ
+check_path jq
+
+# We need curl
+check_path curl
+
+# We need file
+check_path file
+
+if [ -z "$1" ]; then
+  do_asr
+  exit
+fi
+
+case $1 in
+
+clean)
+  echo -e "${YELLOW}Cleaning old files${NOCOLOR}"
+  do_clean
+;;
+
+list)
+  if [ "$ASR_PLATFORM" = linux ]; then
+    pactl list short sources
+  else
+    ffmpeg -hide_banner -f avfoundation -list_devices true -i "" 2> >(grep -A 10 'audio') | grep -v 'error'
+  fi
+;;
+
+asr)
+do_asr
 ;;
 
 *)
