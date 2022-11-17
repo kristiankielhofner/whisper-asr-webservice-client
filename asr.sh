@@ -56,6 +56,15 @@ do_clean() {
   rm -rf "$AUDIO" "$RESULTS" "$TEXT" "$TRANSLATED_TEXT"
 }
 
+show_usage() {
+  echo -e "${RED}Usage $0:
+
+  asr [file or audio device identifier] - do ASR. If you don't specify a device or file we'll try to use your microphone
+  list - list available audio devices for capture and ASR
+  clean - clean old files${NOCOLOR}"
+  exit 1
+}
+
 do_asr() {
   if [ ! -r "$SOURCE" ]; then
     check_path ffmpeg
@@ -144,11 +153,6 @@ check_path curl
 # We need file
 check_path file
 
-if [ -z "$1" ]; then
-  do_asr
-  exit
-fi
-
 case $1 in
 
 clean)
@@ -165,12 +169,11 @@ list)
 ;;
 
 asr)
-do_asr
+  do_asr
 ;;
 
 *)
-  echo -e "${RED}Usage $0 asr|clean|list [PulseAudio capture device or local file]${NOCOLOR}"
-  exit 1
+  show_usage
 ;;
 
 esac
