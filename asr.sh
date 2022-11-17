@@ -173,6 +173,11 @@ asr)
   do_asr
 ;;
 
+dist)
+  cd ..
+  tar -cvzf whisper.tar.gz --exclude whisper/.git whisper
+;;
+
 *)
   show_usage
 ;;
