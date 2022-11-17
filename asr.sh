@@ -2,7 +2,7 @@
 
 # Whisper ASR client
 # TODO: Investigate HTTP2 failures and stalls on mac
-# TODO: 
+# TODO: CLEAN UP
 
 # Define output files
 AUDIO="asr.flac"
@@ -67,13 +67,8 @@ else
 fi
 
 whisperTranslate() {
-  if [ -z $3 ]; then
-    DEST_LANG="en"
-  else
-    DEST_LANG="$3"
-  fi
   curl --http1.1 -X 'POST' \
-  "$BASE_URL/asr?task=translate&language=$DEST_LANG&output=json" \
+  "$BASE_URL/asr?task=translate&language=$3&output=json" \
   -u "$USER:$PASS" \
   -H 'accept: application/json' \
   -H 'Content-Type: multipart/form-data' \
@@ -140,13 +135,24 @@ asr)
     if [ "$LANG" != "en" ]; then
       echo -e "\n${YELLOW}Detected non-English language $LANG - translating${NOCOLOR}"
       echo
-      whisperTranslate "$AUDIO" "$MIME" | jq -r .text | tr . '\n' | sed 's/ //' > "$TRANSLATED_TEXT"
+      whisperTranslate "$AUDIO" "$MIME" "en" | jq -r .text | tr . '\n' | sed 's/ //' > "$TRANSLATED_TEXT"
       echo -e "\n${YELLOW}Here is your $LANG language text in English from Whisper ASR!"
       echo -e "\n${GREEN}"
       cat "$TRANSLATED_TEXT"
       echo -e "\n${YELLOW}Your $LANG-English translated raw text output can be found in $TRANSLATED_TEXT${NOCOLOR}"
+    else
+      #echo -e "\n${YELLOW}If you want me to translate please type the two letter language ISO code${NOCOLOR}"
+      #read TLANG
+      if [ "$TLANG" ]; then
+        whisperTranslate "$AUDIO" "$MIME" "$TLANG" | jq -r .text | tr . '\n' | sed 's/ //' > "$TRANSLATED_TEXT"
+        echo -e "\n${YELLOW}Here is your translated $TLANG language text from Whisper ASR!"
+        echo -e "\n${GREEN}"
+        cat "$TRANSLATED_TEXT"
+        echo -e "\n${NOCOLOR}"
+      else
+        echo -e "\n${YELLOW}Translation skipped${NOCOLOR}"
+      fi
     fi
-
   else
     echo -e "${RED}Error - could not read audio $AUDIO${NOCOLOR}"
     exit 1
