@@ -108,7 +108,7 @@ asr)
   if [ ! -r "$SOURCE" ]; then
     check_path ffmpeg
     do_clean
-    echo -e "${YELLOW}Recording audio with ffmpeg - CTRL+C when you want to stop capturing and submit${NOCOLOR}"
+    echo -e "${YELLOW}Recording audio with ffmpeg - CTRL+C when you want to stop capturing and submit ${RED}BUT WAIT FOR FFMPEG OUTPUT${NOCOLOR}"
     if [ "$ASR_PLATFORM" = "linux" ]; then
       ffmpeg -hide_banner -f pulse -i "$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
     else
