@@ -174,6 +174,7 @@ asr)
 ;;
 
 dist)
+  do_clean
   cd ..
   tar -cvzf whisper.tar.gz --exclude whisper/.git whisper
 ;;
