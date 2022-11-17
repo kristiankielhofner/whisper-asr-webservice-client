@@ -5,11 +5,18 @@
 # TODO: CLEAN UP
 
 # Define output files
-RESULTS="asr.json"
-TEXT="asr.txt"
+
+if [ $ASR_OUT ]; then
+  TEMP_LOCATION=$ASR_OUT
+else
+  TEMP_LOCATION=$(mktemp -p /tmp asr.XXXXXXXXXX)
+fi
+
+RESULTS=$TEMP_LOCATION.json
+TEXT=$TEMP_LOCATION.txt
 
 # If we detect languages other than english automatically translate and save here
-TRANSLATED_TEXT="asr-translated.txt"
+TRANSLATED_TEXT=$TEMP_LOCATION-translated.txt
 
 # Shell colors
 NOCOLOR='\033[0m'
@@ -61,7 +68,7 @@ fi
 
 # Cleanup
 do_clean() {
-  rm -rf "$AUDIO" "$RESULTS" "$TEXT" "$TRANSLATED_TEXT"
+  rm -rf "$AUDIO" "$RESULTS" "$TEXT" "$TRANSLATED_TEXT" /tmp/asr.*
 }
 
 show_usage() {
