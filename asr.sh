@@ -62,7 +62,7 @@ else
   if [ "$ASR_PLATFORM" = "linux" ]; then
     SOURCE="default"
   else
-    SOURCE=':1'
+    SOURCE="1"
   fi
 fi
 
@@ -100,7 +100,7 @@ list)
   if [ "$ASR_PLATFORM" = linux ]; then
     pactl list short sources
   else
-    ffmpeg -f avfoundation -list_devices true -i ""
+    ffmpeg -hide_banner -f avfoundation -list_devices true -i "" 2> >(grep -A 10 'audio') | grep -v 'error'
   fi
 ;;
 
@@ -112,7 +112,7 @@ asr)
     if [ "$ASR_PLATFORM" = "linux" ]; then
       ffmpeg -hide_banner -f pulse -i "$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
     else
-      ffmpeg -hide_banner -f avfoundation -i "$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
+      ffmpeg -hide_banner -f avfoundation -i ":$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
     fi
   else
     echo -e "${YELLOW}Using provided file $SOURCE as input${NOCOLOR}"
