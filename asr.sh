@@ -82,7 +82,7 @@ do_asr() {
 
   if [ -f "$AUDIO" ]; then
     MIME=$(file --mime-type -b "$AUDIO")
-    echo -e "${YELLOW}Submitting to $BASE_URL - please hold but ASR time is roughly 20x real-time${NOCOLOR}"
+    echo -e "${YELLOW}Submitting to $BASE_URL - please hold: ASR time is usually 10-20x real-time${NOCOLOR}"
     curl --http1.1 -X 'POST' \
     "$BASE_URL/asr?task=transcribe&output=json" \
     -u "$USER:$PASS" \
