@@ -34,7 +34,7 @@ if [ -r .config ]; then
 fi
 
 if [ -z "$BASE_URL" ]; then
-  echo -e "${RED}Config file .config needs BASE_URL - exiting${NOCOLOR}"
+  echo -e "${RED}Need to define BASE_URL - exiting${NOCOLOR}"
   exit 1
 fi
 
