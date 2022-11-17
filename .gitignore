@@ -2,3 +2,6 @@
 *.flac
 *.json
 *.wav
+*.opus
+*.mp3
+.config

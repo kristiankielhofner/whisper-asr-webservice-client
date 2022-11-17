@@ -5,22 +5,11 @@
 # TODO: CLEAN UP
 
 # Define output files
-AUDIO="asr.flac"
 RESULTS="asr.json"
 TEXT="asr.txt"
 
 # If we detect languages other than english automatically translate and save here
 TRANSLATED_TEXT="asr-translated.txt"
-
-# We need to know where to go
-BASE_URL="***REMOVED***"
-
-# HTTP basic auth params
-USER="***REMOVED***"
-PASS="***REMOVED***"
-
-# FLAC compression level for live capture
-FLAC_COMPRESS="12"
 
 # Shell colors
 NOCOLOR='\033[0m'
@@ -40,6 +29,24 @@ LIGHTPURPLE='\033[1;35m'
 LIGHTCYAN='\033[1;36m'
 WHITE='\033[1;37m'
 
+if [ -r .config ]; then
+  . .config
+else
+  echo -e "${RED}Can't read .config - exiting${NOCOLOR}"
+  exit 1
+fi
+
+if [ -z "$BASE_URL" ]; then
+  echo -e "${RED}Config file .config needs BASE_URL - exiting${NOCOLOR}"
+  exit 1
+fi
+
+if [ -z "$RECORD_FORMAT" ]; then
+  RECORD_FORMAT="flac"
+fi
+
+AUDIO="asr.$RECORD_FORMAT"
+
 check_path() {
   [[ $(type -P "$1") ]] || { echo -e "${RED}Error - you need to install $1${NOCOLOR}" 1>&2; exit 1; }
 }
@@ -48,7 +55,6 @@ if [ "$OSTYPE" = "linux-gnu" ]; then
   ASR_PLATFORM="linux"
 else
   ASR_PLATFORM="mac"
-#  AUDIO="asr.wav"
 fi
 
 # Cleanup
@@ -71,9 +77,9 @@ do_asr() {
     do_clean
     echo -e "${YELLOW}Recording audio with ffmpeg - CTRL+C when you want to stop capturing and submit ${RED}BUT WAIT FOR FFMPEG OUTPUT${NOCOLOR}"
     if [ "$ASR_PLATFORM" = "linux" ]; then
-      ffmpeg -hide_banner -f pulse -i "$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
+      ffmpeg -hide_banner -f pulse -i "$SOURCE" -ar 16000 -ac 1 "$AUDIO"
     else
-      ffmpeg -hide_banner -f avfoundation -i ":$SOURCE" -compression_level "$FLAC_COMPRESS" -ar 16000 -ac 1 "$AUDIO"
+      ffmpeg -hide_banner -f avfoundation -i ":$SOURCE" -ar 16000 -ac 1 "$AUDIO"
     fi
   else
     echo -e "${YELLOW}Using provided file $SOURCE as input${NOCOLOR}"

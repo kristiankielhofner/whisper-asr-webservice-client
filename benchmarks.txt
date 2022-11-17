@@ -1,0 +1,21 @@
+60 min audio
+
+FLAC:
+23 seconds to upload
+3:06 total time
+69MB file size
+
+MP3:
+8 seconds to upload
+2:45 total time
+11MB file size
+
+OPUS:
+12 seconds to upload
+4:10 total time
+29MB file size
+
+WAV:
+31 seconds to upload
+3:46 total time
+111MB file size
