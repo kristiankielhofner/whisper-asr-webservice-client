@@ -54,6 +54,14 @@ if [ -z "$USER" -o -z "$PASS" ]; then
   PASS="none"
 fi
 
+if [ -z "$MODEL" ]; then
+  MODEL="base"
+fi
+
+echo -e "${YELLOW}Using Whisper model $MODEL${NOCOLOR}"
+
+WHISPER_URL="$BASE_URL/$MODEL"
+
 AUDIO="asr.$RECORD_FORMAT"
 
 check_path() {
@@ -97,9 +105,9 @@ do_asr() {
 
   if [ -f "$AUDIO" ]; then
     MIME=$(file --mime-type -b "$AUDIO")
-    echo -e "${YELLOW}Submitting to $BASE_URL - please hold: ASR time is usually 10x faster than real-time${NOCOLOR}"
+    echo -e "${YELLOW}Submitting to $WHISPER_URL - please hold: ASR time is usually 10x faster than real-time${NOCOLOR}"
     curl --http1.1 -X 'POST' \
-    "$BASE_URL/asr?task=transcribe&output=json" \
+    "$WHISPER_URL/asr?task=transcribe&output=json" \
     -u "$USER:$PASS" \
     -H 'accept: application/json' \
     -H 'Content-Type: multipart/form-data' \
@@ -153,7 +161,7 @@ fi
 
 whisperTranslate() {
   curl --http1.1 -X 'POST' \
-  "$BASE_URL/asr?task=translate&language=$3&output=json" \
+  "$WHISPER_URL/asr?task=translate&language=$3&output=json" \
   -u "$USER:$PASS" \
   -H 'accept: application/json' \
   -H 'Content-Type: multipart/form-data' \
