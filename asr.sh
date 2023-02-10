@@ -132,7 +132,7 @@ do_asr() {
     fi
 
     INFER_TIME=$(cat "$RESULTS" | jq -r .infer_time)
-    echo -e "${YELLOW}Total inference time: $INFER_TIME ${NONE}"
+    echo -e "${YELLOW}Total inference time: $INFER_TIME ms ${NONE}"
   else
     echo -e "${RED}Error - could not read audio $AUDIO${NOCOLOR}"
     exit 1
