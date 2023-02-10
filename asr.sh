@@ -118,7 +118,7 @@ do_asr() {
     echo -e "\n${YELLOW}Here is your $HUMAN_LANG language text from Whisper ASR!"
     echo -e "${GREEN}"
     # Unnecessary use of cat award
-    cat "$RESULTS" | jq -r .text | tr . '\n' | sed 's/ //' | tee "$TEXT"
+    cat "$RESULTS" | jq -r .text | tee "$TEXT"
 
     echo -e "\n${YELLOW}Your raw text output can be found in $TEXT"
 
@@ -128,6 +128,14 @@ do_asr() {
        if [ "$TRANSLATION" != "null" ]; then
          echo -e "\n${YELLOW}Detected non-English language $HUMAN_LANG - translation${NOCOLOR}"
          echo -e "\n${GREEN}$TRANSLATION"
+       fi
+    fi
+
+    if `cat "$RESULTS" | jq 'has("used_macros")' > /dev/null 2> /dev/null`; then
+      USED_MACROS=$(cat "$RESULTS" | jq -r .used_macros)
+
+       if [ "$USED_MACROS" != "null" ]; then
+         echo -e "\n${YELLOW}NOTICE: Detected and used voice macro $USED_MACROS ${NOCOLOR}"
        fi
     fi
 
@@ -145,7 +153,8 @@ else
   if [ "$ASR_PLATFORM" = "linux" ]; then
     SOURCE="default"
   else
-    SOURCE="0"
+    SOURCE=$(ffmpeg -hide_banner -f avfoundation -list_devices true -i "" 2> >(grep -A 10 'audio') | grep -v 'error' | grep Mac | grep Microphone | cut -d']' -f2 | tr -d '[')
+    echo "Using Mac source device $SOURCE"
   fi
 fi
 
