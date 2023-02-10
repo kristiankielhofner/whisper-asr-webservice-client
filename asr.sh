@@ -60,7 +60,7 @@ fi
 
 echo -e "${YELLOW}Using Whisper model $MODEL${NOCOLOR}"
 
-WHISPER_URL="$BASE_URL/$MODEL"
+WHISPER_URL="$BASE_URL"
 
 AUDIO="asr.$RECORD_FORMAT"
 
@@ -107,7 +107,7 @@ do_asr() {
     MIME=$(file --mime-type -b "$AUDIO")
     echo -e "${YELLOW}Submitting to $WHISPER_URL - please hold: ASR time is usually 10x faster than real-time${NOCOLOR}"
     curl --http1.1 -X 'POST' \
-    "$WHISPER_URL/asr?task=transcribe&output=json" \
+    "$WHISPER_URL/asr?task=transcribe&output=json&model=$MODEL" \
     -u "$USER:$PASS" \
     -H 'accept: application/json' \
     -H 'Content-Type: multipart/form-data' \
@@ -122,27 +122,17 @@ do_asr() {
 
     echo -e "\n${YELLOW}Your raw text output can be found in $TEXT"
 
-    if [ "$LANG" != "en" ]; then
-      echo -e "\n${YELLOW}Detected non-English language $HUMAN_LANG - translating${NOCOLOR}"
-      echo
-      whisperTranslate "$AUDIO" "$MIME" "en" | jq -r .text | tr . '\n' | sed 's/ //' > "$TRANSLATED_TEXT"
-      echo -e "\n${YELLOW}Here is your $HUMAN_LANG language text translated to English from Whisper ASR!"
-      echo -e "\n${GREEN}"
-      cat "$TRANSLATED_TEXT"
-      echo -e "\n${YELLOW}Your $HUMAN_LANG to English translated raw text output can be found in $TRANSLATED_TEXT${NOCOLOR}"
-    else
-      #echo -e "\n${YELLOW}If you want me to translate please type the two letter language ISO code${NOCOLOR}"
-      #read TLANG
-      if [ "$TLANG" ]; then
-        whisperTranslate "$AUDIO" "$MIME" "$TLANG" | jq -r .text | tr . '\n' | sed 's/ //' > "$TRANSLATED_TEXT"
-        echo -e "\n${YELLOW}Here is your translated $TLANG language text from Whisper ASR!"
-        echo -e "\n${GREEN}"
-        cat "$TRANSLATED_TEXT"
-        echo -e "\n${NOCOLOR}"
-      else
-        echo -e "\n${YELLOW}Translation skipped${NOCOLOR}"
-      fi
+    if `cat "$RESULTS" | jq 'has("translation")' > /dev/null 2> /dev/null`; then
+      TRANSLATION=$(cat "$RESULTS" | jq -r .translation)
+
+       if [ "$TRANSLATION" != "null" ]; then
+         echo -e "\n${YELLOW}Detected non-English language $HUMAN_LANG - translation${NOCOLOR}"
+         echo -e "\n${GREEN}$TRANSLATION"
+       fi
     fi
+
+    INFER_TIME=$(cat "$RESULTS" | jq -r .infer_time)
+    echo -e "${YELLOW}Total inference time: $INFER_TIME ${NONE}"
   else
     echo -e "${RED}Error - could not read audio $AUDIO${NOCOLOR}"
     exit 1
@@ -155,18 +145,9 @@ else
   if [ "$ASR_PLATFORM" = "linux" ]; then
     SOURCE="default"
   else
-    SOURCE="1"
+    SOURCE="0"
   fi
 fi
-
-whisperTranslate() {
-  curl --http1.1 -X 'POST' \
-  "$WHISPER_URL/asr?task=translate&language=$3&output=json" \
-  -u "$USER:$PASS" \
-  -H 'accept: application/json' \
-  -H 'Content-Type: multipart/form-data' \
-  -F "audio_file=@$1;type=$2"
-}
 
 # We need JQ
 check_path jq
