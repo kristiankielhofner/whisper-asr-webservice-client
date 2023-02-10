@@ -140,7 +140,14 @@ do_asr() {
     fi
 
     INFER_TIME=$(cat "$RESULTS" | jq -r .infer_time)
-    echo -e "${YELLOW}Total inference time: $INFER_TIME ms ${NONE}"
+    AUDIO_LENGTH=$(ffprobe "$AUDIO" 2>&1 | grep Duration | cut -d':' -f 4 | cut -d',' -f1)
+    AUDIO_LENGTH_MS=$(echo "$AUDIO_LENGTH * 1000" | bc)
+    SPEEDUP=$(echo "$AUDIO_LENGTH_MS / $INFER_TIME" | bc -l)
+    echo -e "${YELLOW}Input audio is $AUDIO_LENGTH_MS ms and infer time is $INFER_TIME ms - speedup of x$SPEEDUP"
+
+    # Reset terminal color back to none when done
+    echo -e "${NOCOLOR}"
+
   else
     echo -e "${RED}Error - could not read audio $AUDIO${NOCOLOR}"
     exit 1
