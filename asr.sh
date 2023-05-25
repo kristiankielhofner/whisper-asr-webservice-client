@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Whisper ASR client
+# ASR client
 # TODO: Investigate HTTP2 failures and stalls on mac
 # TODO: CLEAN UP
 
@@ -58,7 +58,15 @@ if [ -z "$MODEL" ]; then
   MODEL="base"
 fi
 
-echo -e "${YELLOW}Using Whisper model $MODEL${NOCOLOR}"
+if [ -z "$BEAM_SIZE" ]; then
+  BEAM_SIZE="2"
+fi
+
+if [ -z "$DETECT_LANGUAGE" ]; then
+  DETECT_LANGUAGE="False"
+fi
+
+echo -e "${YELLOW}Using model $MODEL with beam size $BEAM_SIZE and language detection $DETECT_LANGUAGE${NOCOLOR}"
 
 WHISPER_URL="$BASE_URL"
 
@@ -106,8 +114,8 @@ do_asr() {
   if [ -f "$AUDIO" ]; then
     MIME=$(file --mime-type -b "$AUDIO")
     echo -e "${YELLOW}Submitting to $WHISPER_URL - please hold: ASR time is usually 10x faster than real-time${NOCOLOR}"
-    curl --http1.1 -X 'POST' \
-    "$WHISPER_URL/asr?task=transcribe&output=json&model=$MODEL" \
+    curl -X 'POST' \
+    "$WHISPER_URL/asr?task=transcribe&output=json&model=$MODEL&beam_size=$BEAM_SIZE&detect_language=$DETECT_LANGUAGE" \
     -u "$USER:$PASS" \
     -H 'accept: application/json' \
     -H 'Content-Type: multipart/form-data' \
@@ -115,7 +123,7 @@ do_asr() {
 
     LANG=$(cat "$RESULTS" | jq -r .language)
     HUMAN_LANG=$(cat langmap.json | jq -r --arg code "$LANG" '.[] | select(.code == $code) | {name} | .name')
-    echo -e "\n${YELLOW}Here is your $HUMAN_LANG language text from Whisper ASR!"
+    echo -e "\n${YELLOW}Here is your $HUMAN_LANG language text from ASR!"
     echo -e "${GREEN}"
     # Unnecessary use of cat award
     cat "$RESULTS" | jq -r .text | tee "$TEXT"
@@ -131,6 +139,15 @@ do_asr() {
        fi
     fi
 
+    if `cat "$RESULTS" | jq 'has("normalized")' > /dev/null 2> /dev/null`; then
+      NORMALIZED=$(cat "$RESULTS" | jq -r .normalized)
+
+       if [ "$NORMALIZED" != "null" ]; then
+         echo -e "\n${YELLOW}Detected normalized text ${NOCOLOR}"
+         echo -e "\n${GREEN}$NORMALIZED"
+       fi
+    fi
+
     if `cat "$RESULTS" | jq 'has("used_macros")' > /dev/null 2> /dev/null`; then
       USED_MACROS=$(cat "$RESULTS" | jq -r .used_macros)
 
@@ -140,10 +157,9 @@ do_asr() {
     fi
 
     INFER_TIME=$(cat "$RESULTS" | jq -r .infer_time)
-    AUDIO_LENGTH=$(ffprobe "$AUDIO" 2>&1 | grep Duration | cut -d':' -f 4 | cut -d',' -f1)
-    AUDIO_LENGTH_MS=$(echo "$AUDIO_LENGTH * 1000" | bc)
-    SPEEDUP=$(echo "$AUDIO_LENGTH_MS / $INFER_TIME" | bc -l)
-    echo -e "${YELLOW}Input audio is $AUDIO_LENGTH_MS ms and infer time is $INFER_TIME ms - speedup of x$SPEEDUP"
+    INFER_SPEEDUP=$(cat "$RESULTS" | jq -r .infer_speedup)
+    AUDIO_DURATION=$(cat "$RESULTS" | jq -r .audio_duration)
+    echo -e "${YELLOW}Input audio is $AUDIO_DURATION ms and infer time is $INFER_TIME ms - speedup of $INFER_SPEEDUP x"
 
     # Reset terminal color back to none when done
     echo -e "${NOCOLOR}"
